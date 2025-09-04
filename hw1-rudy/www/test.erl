@@ -23,7 +23,7 @@ request(Host, Port) ->
   Recv = gen_tcp:recv(Server, 0),
   case Recv of
     {ok, _} ->
-      io:format("Response received~n"),
+      io:format("Ok received~n"),
       ok;
     {error, Error} ->
       io:format("test: error: ~w~n", [Error])

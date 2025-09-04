@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rudy Web Server</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Welcome to Rudy Web Server!</h1>
+        <h3>Καλώς ήρθατε στον Διακομιστή Ιστού Ρούντι!</h3>
+        <br/>
+        <p>
+            This is the base path. Try requesting a file by typing the URL, or visit <br/>
+            <h2><a href="/files">/files</a></h2>to see a list of files in the webroot.
+        </p>
+    </div>
+    <button id="hover-btn"></button>
+
+    <script>
+        const btn = document.getElementById('hover-btn');
+        btn.addEventListener('mouseenter', () => {
+            document.body.classList.add('bg-gif');
+        });
+        btn.addEventListener('mouseleave', () => {
+            document.body.classList.remove('bg-gif');
+        });
+    </script>
+</body>
+</html>

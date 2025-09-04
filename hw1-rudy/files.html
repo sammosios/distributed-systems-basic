@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Files in Webroot</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Cinzel', serif;
+            background: #f0f4f8;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Background GIF overlay */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('https://cdn.pixabay.com/animation/2022/08/15/03/40/03-40-55-968_512.gif') center center / cover no-repeat;
+            opacity: 0;
+            transition: opacity 0.6s ease-in-out;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        body.bg-gif::before {
+            opacity: 1;
+        }
+
+        /* Tiny hover button in bottom-right corner */
+        #hover-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            background: url('https://ih1.redbubble.net/image.2033719234.8503/bg,f8f8f8-flat,750x,075,f-pad,750x1000,f8f8f8.jpg') center center / cover no-repeat;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 1.2rem;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            transition: background 0.3s ease;
+            z-index: 1000;
+        }
+
+        .container {
+            background: #fff;
+            padding: 2.5rem 3rem;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            max-width: 700px;
+            width: 100%;
+            text-align: left;
+        }
+
+        h1 {
+            color: #007acc;
+            margin-bottom: 1.5rem;
+            font-size: 2rem;
+        }
+
+        ul {
+            list-style: disc;
+            padding-left: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        li {
+            margin-bottom: 0.75rem;
+        }
+
+        a {
+            color: #007acc;
+            text-decoration: none;
+            font-weight: bold;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+
+        a:hover {
+            background: #e0f0ff;
+            text-decoration: none;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 1.5rem 2rem;
+            }
+
+            h1 {
+                font-size: 1.6rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Files in Webroot</h1>
+        <ul>
+            <!-- FILE_LIST_PLACEHOLDER -->
+        </ul>
+    </div>
+
+    <button id="hover-btn"></button>
+
+    <script>
+        const btn = document.getElementById('hover-btn');
+        btn.addEventListener('mouseenter', () => {
+            document.body.classList.add('bg-gif');
+        });
+        btn.addEventListener('mouseleave', () => {
+            document.body.classList.remove('bg-gif');
+        });
+    </script>
+</body>
+
+</html>

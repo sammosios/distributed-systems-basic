@@ -1,7 +1,7 @@
 -module(http).
 -export([listen/0]).
 -export([parse_request/1]).
--export([ok/1, get/1]).
+-export([ok/1, ok/2, get/1, not_found/1, error/1, no_access/1]).
 
 listen() ->
   receive
@@ -27,11 +27,11 @@ parse_request(R0) ->
   {Body, _} = message_body(R2),
   {Request, Headers, Body}.
 
-% Request-Line = Method SP Request-URI SP HTTP-Version CRLF
+%% Request-Line = Method SP Request-URI SP HTTP-Version CRLF
 request_line("GET " ++ R0) ->
   {URI, R1} = request_uri(R0),
   {Version, R2} = http_version(R1),
-  % 13,10 = CRLF
+  %% 13,10 = CRLF
   [13,10|R3] = R2,
   {{get, URI, Version}, R3}.
 
@@ -47,7 +47,7 @@ http_version("HTTP/1.0" ++ R0) ->
   {v10, R0}.
 
 
-% Headers
+%% Headers
 headers([13,10|R0]) ->
   {[],R0};
 headers(R0) ->
@@ -66,7 +66,37 @@ message_body(R) ->
 
 
 %% Helpers to construct simple HTTP messages
-ok(Body) ->
-"HTTP/1.1 200 OK\r\n" ++ "\r\n" ++ Body.
 get(URI) ->
-"GET " ++ URI ++ " HTTP/1.1\r\n" ++ "\r\n".
+  "GET " ++ URI ++ " HTTP/1.1\r\n" ++ "\r\n".
+ok(Body) ->
+    [
+        "HTTP/1.1 200 OK\r\n",
+        "Content-Length: ", byteLength(Body), "\r\n",
+        "\r\n",
+        Body
+    ].
+
+ok(Body, ExtraHeadersList) ->
+    %% ExtraHeadersList is a list of {Key, Value} tuples
+    %% The syntax below is list comprehension as in = [Expression || Pattern <- List]
+    HeaderLines = [[K, ": ", V, "\r\n"] || {K, V} <- ExtraHeadersList],
+
+    Response = [
+        "HTTP/1.1 200 OK\r\n",
+        "Content-Length: ", byteLength(Body), "\r\n",
+        HeaderLines,
+        "\r\n",
+        Body
+    ],
+    Response.
+
+error(Body) ->
+    "HTTP/1.1 500 Internal Server Error\r\n" ++ "\r\n" ++ Body.
+not_found(Body) ->
+  "HTTP/1.1 404 Not Found\r\n" ++ "\r\n" ++ Body.
+no_access(Body) ->
+  "HTTP/1.1 403 Forbidden\r\n" ++ "\r\n" ++ Body.
+
+byteLength(Body) ->
+  %% Convert the length of the body to a string 
+  integer_to_list(iolist_size(Body)).
