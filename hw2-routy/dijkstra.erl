@@ -1,5 +1,5 @@
 -module(dijkstra).
--export([entry/2, table/2, replace/4, update/4, iterate/3]).
+-export([entry/2, table/2, route/2, iterate/3, replace/4, update/4]).
 
 entry(Node, Sorted) ->
     case lists:keyfind(Node, 1, Sorted) of
@@ -78,15 +78,15 @@ table(Gateways, Map) ->
                         false ->    {Node, inf, undefined}  % Distance infinity, no gateway
                     end
             end,
-            Nodes
+            Nodes 
         ),
     Sorted = lists:keysort(2, InitialSorted),
     iterate(Sorted, Map, []).
 
 route(Node, Table) ->
     case lists:keyfind(Node, 1, Table) of
-        false -> 
-            notfound;
         {Node, Gateway} -> 
-            {ok, Gateway}
+            {ok, Gateway};
+        false -> 
+            notfound
     end.
