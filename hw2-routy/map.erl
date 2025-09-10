@@ -7,6 +7,7 @@ new() ->
 
 %% Add or update a node with its links
 update(Node, Links, Map) ->
+    Nodes = [N || {N, _} <- Map],
     case lists:keyfind(Node, 1, Map) of
         false ->
             [{Node, Links} | Map];
@@ -16,6 +17,7 @@ update(Node, Links, Map) ->
 
 %% Return neighbors of a node, or [] if not found
 reachable(Node, Map) ->
+    Nodes = [N || {N, _} <- Map],
     case lists:keyfind(Node, 1, Map) of
         {Node, Neighbors} -> Neighbors;
         false -> []
@@ -23,6 +25,7 @@ reachable(Node, Map) ->
 
 %% Return all nodes in the map
 all_nodes(Map) ->
+    Nodes = [N || {N, _} <- Map],
     % 1. Create a function that takes a tuple,
     %    and returns a new list with the Key prepended to the ValueList.
     %% e.g. {a, [b, c]} -> [a, b, c]

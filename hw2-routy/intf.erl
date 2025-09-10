@@ -4,13 +4,19 @@
 new() ->
     [].
 
-add(Name, Ref, Pid, Intf) ->
-    [{Name, Ref, Pid} | Intf].
+add(Node, Ref, Pid, Intf) ->
+    case lists:keyfind(Node, 1, Intf) of
+        false -> [{Node, Ref, Pid} | Intf];  % Add new neighbor
+        {_Node, _ExistingRef, _ExistingPid} -> Intf % Already exists, ignore
+    end.
 
 remove(Name, Intf) ->
+    Nodes = lists:map(fun({N, _, _}) -> N end, Intf),
+    io:format("intf:remove(~p, Intf=~p)~n", [Name, Nodes]),
     lists:keydelete(Name, 1, Intf).
 
 lookup(Name, Intf) ->
+    Nodes = lists:map(fun({N, _, _}) -> N end, Intf),
     case lists:keyfind(Name, 1, Intf) of
         false -> 
             notfound;
@@ -19,6 +25,7 @@ lookup(Name, Intf) ->
     end.
 
 ref(Name, Intf) ->
+    Nodes = lists:map(fun({N, _, _}) -> N end, Intf),
     case lists:keyfind(Name, 1, Intf) of
         false -> 
             notfound;
@@ -27,6 +34,7 @@ ref(Name, Intf) ->
     end.
 
 name(Ref, Intf) ->
+    Nodes = lists:map(fun({N, _, _}) -> N end, Intf),
     case lists:keyfind(Ref, 2, Intf) of
         false -> 
             notfound;
@@ -35,9 +43,12 @@ name(Ref, Intf) ->
     end.
 
 list(Intf) ->
+    Nodes = lists:map(fun({N, _, _}) -> N end, Intf),
     lists:map(fun({Name, _Ref, _Pid}) -> Name end, Intf).
 
 broadcast(Message, Intf) ->
+    Nodes = lists:map(fun({N, _, _}) -> N end, Intf),
+    io:format("intf:broadcast(~p, Intf=~p)~n", [Message, Nodes]),
     lists:foreach(
       fun({_Name, _Ref, Pid}) -> 
               Pid ! Message 

@@ -2,6 +2,7 @@
 -export([entry/2, table/2, route/2, iterate/3, replace/4, update/4]).
 
 entry(Node, Sorted) ->
+    Nodes = [N || {N, _, _} <- Sorted],
     case lists:keyfind(Node, 1, Sorted) of
         false -> 
             0;
@@ -11,6 +12,7 @@ entry(Node, Sorted) ->
 
 
 replace(Node, N, Gateway, Sorted) ->
+    Nodes = [Nod || {Nod, _, _} <- Sorted],
     case lists:keyfind(Node, 1, Sorted) of
         false -> 
             Sorted;
@@ -20,6 +22,7 @@ replace(Node, N, Gateway, Sorted) ->
     end.
 
 update(Node, N, Gateway, Sorted) ->
+    Nodes = [Nod || {Nod, _, _} <- Sorted],
     case entry(Node, Sorted) of
         0 -> 
             Sorted;
@@ -32,6 +35,9 @@ update(Node, N, Gateway, Sorted) ->
     end.
 
 iterate(Sorted, Map, Table) ->
+    SortedNodes = [N || {N, _, _} <- Sorted],
+    TableNodes = [N || {N, _} <- Table],
+    MapNodes = map:all_nodes(Map),
     case Sorted of
         [] ->
             Table;
@@ -84,6 +90,8 @@ table(Gateways, Map) ->
     iterate(Sorted, Map, []).
 
 route(Node, Table) ->
+    TableNodes = [N || {N, _} <- Table],
+    io:format("dijkstra:route(~p, Table=~p)~n", [Node, TableNodes]),
     case lists:keyfind(Node, 1, Table) of
         {Node, Gateway} -> 
             {ok, Gateway};
