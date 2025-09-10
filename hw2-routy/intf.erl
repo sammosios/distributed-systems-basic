@@ -16,16 +16,14 @@ remove(Name, Intf) ->
     lists:keydelete(Name, 1, Intf).
 
 lookup(Name, Intf) ->
-    Nodes = lists:map(fun({N, _, _}) -> N end, Intf),
     case lists:keyfind(Name, 1, Intf) of
         false -> 
             notfound;
-        {Name, _Ref, Pid} -> 
+        {_Name, _Ref, Pid} -> 
             {ok, Pid}
     end.
 
 ref(Name, Intf) ->
-    Nodes = lists:map(fun({N, _, _}) -> N end, Intf),
     case lists:keyfind(Name, 1, Intf) of
         false -> 
             notfound;
@@ -34,7 +32,6 @@ ref(Name, Intf) ->
     end.
 
 name(Ref, Intf) ->
-    Nodes = lists:map(fun({N, _, _}) -> N end, Intf),
     case lists:keyfind(Ref, 2, Intf) of
         false -> 
             notfound;
@@ -43,7 +40,6 @@ name(Ref, Intf) ->
     end.
 
 list(Intf) ->
-    Nodes = lists:map(fun({N, _, _}) -> N end, Intf),
     lists:map(fun({Name, _Ref, _Pid}) -> Name end, Intf).
 
 broadcast(Message, Intf) ->

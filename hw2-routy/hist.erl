@@ -6,7 +6,6 @@ new(Name) ->
     [{Name, inf}].
 
 update(Node, N, History) ->
-    Nodes = [Nod || {Nod, _} <- History],
     case lists:keyfind(Node, 1, History) of
         false -> 
             {new, [{Node, N} | History]};

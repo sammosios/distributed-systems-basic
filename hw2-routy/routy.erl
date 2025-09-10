@@ -56,6 +56,10 @@ router(Name, N, Hist, Intf, Table, Map) ->
       end,
       router(Name, N, Hist, Intf, Table, Map);  
 
+    {send, To, Message} ->
+      self() ! {route, To, Name, Message},
+      router(Name, N, Hist, Intf, Table, Map);
+
     {'DOWN', Ref, process, _, _} ->
       {ok, Down} = intf:name(Ref, Intf),
       io:format("~w: DOWN recived from ~w~n", [Name, Down]),

@@ -1,9 +1,9 @@
--module(greece).
+-module(japan).
 -export([init/0]).
 
 init() ->
     %% Start all routers
-    RoutNames = [athens, thessaloniki, larissa, crete, ioannina],
+    RoutNames = [tokyo, fukinawa, osaka, kyoto, nagoya, sapporo],
     Pids = [{Name, routy:start(Name, Name)} || Name <- RoutNames],
 
     %% Build a mapping Name -> PID for convenience
