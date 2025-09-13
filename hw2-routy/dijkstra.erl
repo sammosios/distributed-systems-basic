@@ -4,7 +4,7 @@
 entry(Node, Sorted) ->
     case lists:keyfind(Node, 1, Sorted) of
         false -> 
-            0;
+            inf;
         {Node, Distance, _Gateway} -> 
             Distance
     end.
@@ -62,7 +62,7 @@ iterate(Sorted, Map, Table) ->
                     NewTable =
                         case lists:keyfind(Node, 1, Table) of
                             false -> [{Node, Gateway} | Table];
-                            _     -> lists:keyreplace(Node, Table, {Node, Gateway})
+                            _     -> lists:keyreplace(Node, 1, Table, {Node, Gateway})
                         end,
                     iterate(NewSorted, Map, NewTable)
             end
@@ -85,7 +85,6 @@ table(Gateways, Map) ->
 
 route(Node, Table) ->
     TableNodes = [N || {N, _} <- Table],
-    io:format("dijkstra:route(~p, Table=~p)~n", [Node, TableNodes]),
     case lists:keyfind(Node, 1, Table) of
         {Node, Gateway} -> 
             {ok, Gateway};

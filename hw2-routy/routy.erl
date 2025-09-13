@@ -7,7 +7,6 @@ start(Reg, Name) ->
   register(Reg, Pid),
   Pid.
 
-
 stop(Node) ->
   io:format("routy:stop(~p)~n", [Node]),
   Node ! stop,
@@ -21,28 +20,42 @@ init(Name) ->
   router(Name, 0, Hist, Intf, Table, Map).
 
 router(Name, N, Hist, Intf, Table, Map) ->
-  io:format("router: ~p, N=~p, history=~p, intf=~p, table=~p routes, map=~p nodes~n",
-            [Name, N, length(Hist), intf:list(Intf), length(Table), map:all_nodes(Map)]),
   receive
     {add, Node, Pid} ->
       io:format("routy: ~p received {add, ~p, ~p}~n", [Name, Node, Pid]),
       Ref = erlang:monitor(process, Pid),
       Intf1 = intf:add(Node, Ref, Pid, Intf),
-      router(Name, N, Hist, Intf1, Table, Map);
+      N1 = N + 1,
+      {Table1, Map1} = updateAndBroadcast(Name, N1, Intf1, Map),
+      router(Name, N1, Hist, Intf1, Table1, Map1);
 
     {remove, Node} ->
       io:format("routy: ~p received {remove, ~p}~n", [Name, Node]),
       {ok, Ref} = intf:ref(Node, Intf),
       erlang:demonitor(Ref),
       Intf1 = intf:remove(Node, Intf),
-      router(Name, N, Hist, Intf1, Table, Map);
+      N1 = N + 1,
+      {Table1, Map1} = updateAndBroadcast(Name, N1, Intf1, Map),
+      router(Name, N1, Hist, Intf1, Table1, Map1);
 
-    {route, Name, _From, Message} ->
-      io:format("~w: received message ~w ~n", [Name, Message]),
+    {links, Node, R, Links} ->
+      case hist:update(Node, R, Hist) of
+      {new, Hist1} ->
+        % special case, updateAndBroadcast is not suitable here
+        Map1 = map:update(Node, Links, Map),
+        Table1 = dijkstra:table(intf:list(Intf), Map1),
+        intf:broadcast({links, Node, R, Links}, Intf),
+        router(Name, R, Hist1, Intf, Table1, Map1);
+      old ->
+        router(Name, N, Hist, Intf, Table, Map)
+      end;
+
+    {route, Name, From, Message} ->
+      io:format("~w: received message ~p from ~p~n", [Name, Message, From]),
       router(Name, N, Hist, Intf, Table, Map);
 
     {route, To, From, Message} ->
-      io:format("~w: routing message (~w)", [Name, Message]),
+      io:format("~w: routing message (~p)~n", [Name, Message]),
       case dijkstra:route(To, Table) of
         {ok, Gw} ->
           case intf:lookup(Gw, Intf) of
@@ -62,38 +75,44 @@ router(Name, N, Hist, Intf, Table, Map) ->
 
     {'DOWN', Ref, process, _, _} ->
       {ok, Down} = intf:name(Ref, Intf),
-      io:format("~w: DOWN recived from ~w~n", [Name, Down]),
+      io:format("~w: DOWN received from ~w~n", [Name, Down]),
       Intf1 = intf:remove(Down, Intf),
-      router(Name, N, Hist, Intf1, Table, Map);
+      N1 = N + 1,
+      {Table1, Map1} = updateAndBroadcast(Name, N1, Intf1, Map),
+      router(Name, N1, Hist, Intf1, Table1, Map1);
 
     {status, From} ->
-      io:format("routy: ~p received {status, ~p}~n", [Name, From]),
       From ! {status, {Name, N, Hist, Intf, Table, Map}},
       router(Name, N, Hist, Intf, Table, Map);
-    
-    {links, Node, R, Links} ->
-      case hist:update(Node, R, Hist) of
-      {new, Hist1} ->
-        intf:broadcast({links, Node, R, Links}, Intf),
-        NewMap = map:update(Node, Links, Map),
-        router(Name, N, Hist1, Intf, Table, NewMap);
-      old ->
-        router(Name, N, Hist, Intf, Table, Map)
-      end;
 
-    update ->
-      io:format("routy: ~p received update~n", [Name]),
-      Table1 = dijkstra:table(intf:list(Intf), Map),
-      router(Name, N, Hist, Intf, Table1, Map);
-
-    broadcast ->
-      io:format("routy: ~p received broadcast~n", [Name]),
-      Message = {links, Name, N, intf:list(Intf)},
-      intf:broadcast(Message, Intf),
-      NewMap = map:update(Name, intf:list(Intf), Map),
-      router(Name, N+1, Hist, Intf, Table, NewMap);
+    status ->
+      prettyPrint(Name, N, Hist, Intf, Table, Map),
+      router(Name, N, Hist, Intf, Table, Map);
 
     stop ->
       io:format("routy: ~p received stop~n", [Name]),
       ok
   end.
+
+updateAndBroadcast(Node, N, Intf, Map) ->
+  Table1 = dijkstra:table(intf:list(Intf), Map1),
+  Map1 = map:update(Node, intf:list(Intf), Map),
+  Message = {links, Node, N, intf:list(Intf)},
+  intf:broadcast(Message, Intf),
+  {Table1, Map1}.
+
+
+prettyPrint(Name, N, Hist, Intf, Table, Map) ->
+    io:format("\n***\tStatus Report for ~p\t***~n", [Name]),
+    io:format("N=~p, \nHist=~p, \nIntf=~p~n", 
+                [N, Hist, Intf]),
+      io:format("Routing Table:~n"),
+      lists:foreach(
+        fun({Node, Gateway}) ->
+                io:format("  ~p \t-> ~p~n", [Node, Gateway])
+        end,
+        Table
+      ),
+      io:format("Map:~n"),
+      io:format("~p~n", [map:all_nodes(Map)]),
+      io:format("~n*******************************************~n~n").

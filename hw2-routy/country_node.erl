@@ -1,9 +1,8 @@
--module(japan).
--export([init/0]).
+-module(country_node).
+-export([init/1, stop/1]).
 
-init() ->
+init(RoutNames) ->
     %% Start all routers
-    RoutNames = [tokyo, fukinawa, osaka, kyoto, nagoya, sapporo],
     Pids = [{Name, routy:start(Name, Name)} || Name <- RoutNames],
 
     %% Build a mapping Name -> PID for convenience
@@ -24,3 +23,13 @@ init() ->
     ),
 
     io:format("All routers started and connected in a full mesh.~n").
+
+stop(RoutNames) ->
+    %% Stop all routers
+    lists:foreach(
+        fun(Name) ->
+            routy:stop(Name)
+        end,
+        RoutNames
+    ),
+    io:format("All routers stopped.~n").

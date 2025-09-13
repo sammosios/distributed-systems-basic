@@ -43,8 +43,8 @@ list(Intf) ->
     lists:map(fun({Name, _Ref, _Pid}) -> Name end, Intf).
 
 broadcast(Message, Intf) ->
-    Nodes = lists:map(fun({N, _, _}) -> N end, Intf),
-    io:format("intf:broadcast(~p, Intf=~p)~n", [Message, Nodes]),
+    % Nodes = lists:map(fun({N, _, _}) -> N end, Intf),
+    % io:format("intf:broadcast(~p, Intf=~p)~n", [Message, Nodes]),
     lists:foreach(
       fun({_Name, _Ref, Pid}) -> 
               Pid ! Message 
