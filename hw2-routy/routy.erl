@@ -85,6 +85,9 @@ router(Name, N, Hist, Intf, Table, Map) ->
       From ! {status, {Name, N, Hist, Intf, Table, Map}},
       router(Name, N, Hist, Intf, Table, Map);
 
+    broadcast ->
+      updateAndBroadcast(Name, N+1, Intf, Map),
+      router(Name, N+1, Hist, Intf, Table, Map);
     status ->
       prettyPrint(Name, N, Hist, Intf, Table, Map),
       router(Name, N, Hist, Intf, Table, Map);
@@ -95,8 +98,8 @@ router(Name, N, Hist, Intf, Table, Map) ->
   end.
 
 updateAndBroadcast(Node, N, Intf, Map) ->
-  Table1 = dijkstra:table(intf:list(Intf), Map1),
   Map1 = map:update(Node, intf:list(Intf), Map),
+  Table1 = dijkstra:table(intf:list(Intf), Map1),
   Message = {links, Node, N, intf:list(Intf)},
   intf:broadcast(Message, Intf),
   {Table1, Map1}.

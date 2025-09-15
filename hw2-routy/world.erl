@@ -5,6 +5,18 @@
     stop_europe/0, stop_asia/0, stop_africa/0, stop_north_america/0,
     stop_south_america/0, stop_oceania/0
 ]).
+-export([connect/2, disconnect/2]).
+
+%% ----------------------
+%% Create bidirectional links between two nodes
+%% ----------------------
+connect({Node1, Host1}, {Node2, Host2}) ->
+    Node1 ! {add, Node2, {Node2, Host2}},
+    Node2 ! {add, Node1, {Node1, Host1}}.
+
+disconnect(Node1, Node2) ->
+    Node1 ! {remove, Node2},
+    Node2 ! {remove, Node1}.
 
 %% ----------------------
 %% Europe
@@ -12,7 +24,7 @@
 europe() ->
     Countries = [
         {greece, [athens, thessaloniki, larissa, crete, ioannina]},
-        {france, [paris, lyon, marseille, lille, bordeaux]},
+        {sweden, [stockholm, gothernburg, uppsala, kiruna, malmo]},
         {germany, [berlin, munich, frankfurt, hamburg, cologne]},
         {italy, [rome, milan, naples, turin, florence]},
         {spain, [madrid, barcelona, valencia, seville, bilbao]}
@@ -21,7 +33,7 @@ europe() ->
 
 stop_europe() -> stop_countries([
         {greece, [athens, thessaloniki, larissa, crete, ioannina]},
-        {france, [paris, lyon, marseille, lille, bordeaux]},
+        {sweden, [stockholm, gothernburg, uppsala, kiruna, malmo]},
         {germany, [berlin, munich, frankfurt, hamburg, cologne]},
         {italy, [rome, milan, naples, turin, florence]},
         {spain, [madrid, barcelona, valencia, seville, bilbao]}
