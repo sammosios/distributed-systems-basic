@@ -4,10 +4,10 @@
 entry(Node, Sorted) ->
     case lists:keyfind(Node, 1, Sorted) of
         false -> 
-            inf;
+            0;
         {Node, Distance, _Gateway} -> 
             Distance
-    end.
+    end.upd
 
 
 replace(Node, N, Gateway, Sorted) ->
@@ -84,7 +84,6 @@ table(Gateways, Map) ->
     iterate(Sorted, Map, []).
 
 route(Node, Table) ->
-    TableNodes = [N || {N, _} <- Table],
     case lists:keyfind(Node, 1, Table) of
         {Node, Gateway} -> 
             {ok, Gateway};
