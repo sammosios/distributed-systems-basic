@@ -3,22 +3,22 @@
 
 run() ->
     DefaultSleep = 1500,
-    DefaultJitter = 1910,
+    DefaultJitter = 150,
     run(DefaultSleep, DefaultJitter).
 
 run(Sleep, Jitter) ->
   Log = loggy:start([john, paul, ringo, george]),
-  A = worker:start(john, Log, 13, Sleep, Jitter),
-  B = worker:start(paul, Log, 23, Sleep, Jitter),
-  C = worker:start(ringo, Log, 36, Sleep, Jitter),
-  D = worker:start(george, Log, 49, Sleep, Jitter),
-  worker:peers(A, [B, C, D]),
-  worker:peers(B, [A, C, D]),
-  worker:peers(C, [A, B, D]),
-  worker:peers(D, [A, B, C]),
+  register(john, worker:start(john, Log, 13, Sleep, Jitter)),
+  register(paul, worker:start(paul, Log, 23, Sleep, Jitter)),
+  register(ringo, worker:start(ringo, Log, 36, Sleep, Jitter)),
+  register(george, worker:start(george, Log, 49, Sleep, Jitter)),
+  worker:peers(john, [paul, ringo, george]),
+  worker:peers(paul, [john, ringo, george]),
+  worker:peers(ringo, [john, paul, george]),
+  worker:peers(george, [john, paul, ringo]),
   timer:sleep(5000),
   loggy:stop(Log),
-  worker:stop(A),
-  worker:stop(B),
-  worker:stop(C),
-  worker:stop(D).
+  worker:stop(john),
+  worker:stop(paul),
+  worker:stop(ringo),
+  worker:stop(george).

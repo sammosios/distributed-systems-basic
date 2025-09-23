@@ -8,13 +8,17 @@ stop(Worker) ->
   Worker ! stop.
 
 init(Name, Logger, Seed, Sleep, Jitter) ->
-  rand:seed(exsplus, {Seed, Seed, Seed}),
-  receive
-    {peers, Peers} ->
-      loop(Name, Logger, time:zero(), Peers, Sleep, Jitter);
-    stop ->
-      ok
-  end.
+    rand:seed(exsplus, {Seed, Seed, Seed}),
+    receive
+        {peers, Peers} ->
+            %% Extract all peer names + self
+            Names = [Name | Peers],
+            % io:format("~p knows peers ~p~n", [Name, Peers]),
+            FullClock = time:clock(Names),
+            loop(Name, Logger, FullClock, Peers, Sleep, Jitter);
+        stop ->
+            ok
+    end.
 
 peers(Worker, Peers) ->
   Worker ! {peers, Peers}.

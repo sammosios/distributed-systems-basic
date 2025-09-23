@@ -1,64 +1,44 @@
 -module(loggy).
 -export([start/1, stop/1]).
--export([init/1]).
 
-start(Nodes) ->
-    spawn_link(fun() -> init(Nodes) end).
+start(Names) ->
+    spawn_link(fun() -> init(Names) end).
 
 stop(Logger) ->
     Logger ! stop.
 
-init(Nodes) ->
-    Clock = time:clock(Nodes),
-    EmptyHoldbackQueue = [],
-    loop(Clock, EmptyHoldbackQueue).
+init(Names) ->
+    Clock = time:clock(Names),
+    loop(Clock, []).
 
-loop(Clock, HoldbackQueue) ->
+loop(Clock, Holdback) ->
     receive
-        {log, From, Time, Msg} ->
-            Queue1 = insert({From, Time, Msg}, HoldbackQueue),
-            {Clock1, Queue2} = deliver_until_stable(Clock, Queue1),
-            loop(Clock1, Queue2);
+        {log, Name, MsgTime, Event} ->
+            %% Add new event to holdback
+            Holdback1 = [{Name, MsgTime, Event} | Holdback],
+            {Ready, Rest} = partition_safe(Holdback1, Clock),
+            Clock1 = lists:foldl(fun({_,T,_},Acc) -> time:merge(Acc,T) end, Clock, Ready),
+            lists:foreach(fun({N,T,E}) ->
+                              io:format("~p ~p ~p~n",[N,T,E])
+                          end, Ready),
+            loop(Clock1, Rest);
+
         stop ->
             io:format("loggy stopping, flushing remaining messages...~n"),
-            lists:foreach(fun({F,T,M}) -> log(F, T, M) end,
-                          lists:sort(fun({_,T1,_}, {_,T2,_}) -> T1 < T2 end, HoldbackQueue)),
-            ok
-    after 400 ->
-        % {Clock1, Queue1} = deliver_until_stable(Clock, HoldbackQueue),
-        % io:format("flushing queue...~n"),
-            lists:foreach(fun({F,T,M}) -> log(F, T, M) end,
-                          lists:sort(fun({_,T1,_}, {_,T2,_}) -> T1 < T2 end, HoldbackQueue)),
-        loop(Clock, [])
+            flush(Holdback, Clock)
     end.
 
-%% Drain queue until no more safe messages
-deliver_until_stable(Clock, Queue) ->
-    case next_safe(Clock, Queue) of
-        none ->
-            {Clock, Queue};
-        {{F,T,M}, Rest} ->
-            log(F, T, M),
-            Clock1 = time:update(F, T, Clock),
-            deliver_until_stable(Clock1, Rest)
-    end.
+flush([], _) -> ok;
+flush(Holdback, Clock) ->
+    {Ready, Rest} = partition_safe(Holdback, Clock),
+    Clock1 = lists:foldl(fun({_,T,_},Acc) -> time:merge(Acc,T) end, Clock, Ready),
+    lists:foreach(fun({N,T,E}) ->
+                      io:format("~p ~p ~p~n",[N,T,E])
+                  end, Ready),
+    flush(Rest, Clock1).
 
-%% Pick the earliest candidate and check safety against current Clock
-next_safe(Clock, Queue) ->
-    Sorted = lists:sort(fun({_,T1,_}, {_,T2,_}) -> T1 < T2 end, Queue),
-    case Sorted of
-        [] -> none;
-        [{F,T,M} | Rest] ->
-            case time:safe({F,T}, Clock) of
-                true  -> {{F,T,M}, Rest};
-                false -> none
-            end
-    end.
-
-%% Always keep queue sorted (by timestamp)
-insert({F,T,M}, Queue) ->
-    lists:sort(fun({_,T1,_}, {_,T2,_}) -> T1 < T2 end,
-               [{F,T,M} | Queue]).
-
-log(From, Time, Msg) ->
-    io:format("log: ~w ~w ~p~n", [Time, From, Msg]).
+%% Split queue into safe vs not-yet-safe
+partition_safe(Holdback, Clock) ->
+    lists:partition(
+      fun({Sender, MsgTime, _}) -> time:safe(Sender, MsgTime, Clock) end,
+      Holdback).
