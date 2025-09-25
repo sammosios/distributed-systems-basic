@@ -18,11 +18,22 @@ add(N, Module, Wrk, Sleep) ->
    worker:start(N, Module, random:uniform(256), Wrk, Sleep).
 
 %% To create a number of workers in one go, 
-grid() ->
+grid1() ->
     more(9, gms1, 1000).
+
+grid3() ->
+    more(9, gms3, 1000).
+
+% add_grid(Grp) ->
+%     more(9, gms3, 1000, Grp).
 
 more(N, Module, Sleep) when N > 1 ->
     Wrk = first(1, Module, Sleep),
+    Ns = lists:seq(2,N),
+    lists:map(fun(Id) -> add(Id, Module, Wrk, Sleep) end, Ns),
+    Wrk.
+
+more(N, Module, Sleep, Wrk) when N > 1 ->
     Ns = lists:seq(2,N),
     lists:map(fun(Id) -> add(Id, Module, Wrk, Sleep) end, Ns),
     Wrk.

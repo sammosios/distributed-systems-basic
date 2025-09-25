@@ -27,14 +27,17 @@ start(Id, Module, Rnd, Peer, Sleep) ->
 
 init(Id, Module, Rnd, Peer, Sleep) ->
     {ok, Cast} = apply(Module, start, [Id, Peer]),
+		io:format("worker ~w started and attempting to join ~w~n", [Id, Peer]),
     {ok, Color} = join(Id, Cast),
     init_cont(Id, Rnd, Cast, Color, Sleep).
 
 % Wait for the first view to be delivered
 
 join(Id, Cast) ->
+	io:format("worker ~w waiting for view~n", [Id]),
     receive 
 	{view, _} ->
+			io:format("worker ~w got view~n", [Id]),
 	    Ref = make_ref(),
 	    Cast ! {mcast, {state_request, Ref}},
 	    state(Id, Ref);
