@@ -62,6 +62,12 @@ slave(Id, Master, Leader, Slaves, Group) ->
     {view, [Leader | Slaves2], Group2} ->
       Master ! {view, Group2},
       slave(Id, Master, Leader, Slaves2, Group2);
+    % Case where new leader sends view before worker detects failure
+    % of old leader
+    {view, [NotTheLeader, Slaves1], Group2} ->
+      % refuse to handle a view with a different leader
+      io:format("SLAVE ~p: received view with different leader ~p, ignoring~n", [Id, NotTheLeader]),
+      slave(Id, Master, Leader, Slaves, Group);
     {'DOWN', _Ref, process, Leader, _Reason} ->
       io:format("SLAVE ~p: LEADER ~p DOWN, starting election~n", [Id, Leader]),
       election(Id, Master, Slaves, Group);
