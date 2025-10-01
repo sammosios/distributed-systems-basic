@@ -18,8 +18,8 @@ add(N, Module, Wrk, Sleep) ->
    worker:start(N, Module, random:uniform(256), Wrk, Sleep).
 
 %% To create a number of workers in one go, 
-grid() ->
-    more(9, gms1, 1000).
+grid(Module) ->
+    more(9, Module, 1000).
 
 more(N, Module, Sleep) when N > 1 ->
     Wrk = first(1, Module, Sleep),

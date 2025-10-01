@@ -40,9 +40,7 @@ join(Id, Cast) ->
 	    state(Id, Ref);
 	{error, Reason} ->
 	    {error, Reason}
-		after 5000 ->
-			{error, timeout}
-		end.
+    end.
 
 % and then wait for the, state
 
