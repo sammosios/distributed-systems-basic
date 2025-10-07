@@ -1,7 +1,7 @@
 -module(ring).
 -export([init/1, add_nodes/1, remote_add_nodes/2, data_random/1]).
 
--define(Module, node2).
+-define(Module, node3).
 
 init(N) ->
   test:ring(?Module, N).
