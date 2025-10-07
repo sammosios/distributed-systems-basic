@@ -157,9 +157,7 @@ notify({Nkey, Npid}, Id, Predecessor, Store) ->
     end.
 
 handover(Id, Store, Nkey, Npid) ->
-    % {InRange, Rest} = storage:split(Nkey, Id, Store),
     {Keep, Rest} = storage:split(Id, Nkey, Store),
-    io:format("Keeping range from ~p to ~p, handing over rest...~n" , [Id, Nkey]),
     Npid ! {handover, Rest},
     Keep.
 
