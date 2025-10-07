@@ -9,19 +9,22 @@
 
 start(Module) ->
     Id = key:generate(), 
-    io:format("SPAWNING NODE ~p~n", [Id]),
     apply(Module, start, [Id]).
 
 
 start(Module, P) ->
     Id = key:generate(), 
-    io:format("SPAWNING NODE ~p~n", [Id]),
-    apply(Module, start, [Id,P]).    
+    apply(Module, start, [Id,P]).
 
 start(_, 0, _) ->
     ok;
 start(Module, N, P) ->
     start(Module, P),
+    start(Module, N-1, P).
+
+ring(Module, N) when N > 2 ->
+    P = start(Module),
+    register(base, P),
     start(Module, N-1, P).
 
 %% The functions add and lookup can be used to test if a DHT works.
@@ -55,6 +58,10 @@ keys(N) ->
 
 add(Keys, P) ->
     lists:foreach(fun(K) -> add(K, gurka, P) end, Keys).
+
+random_add(N, P) ->
+    Keys = keys(N),
+    add(Keys, P).
 
 check(Keys, P) ->
     T1 = now(),
