@@ -61,7 +61,8 @@ add(Keys, P) ->
 
 random_add(N, P) ->
     Keys = keys(N),
-    add(Keys, P).
+    add(Keys, P),
+    Keys.
 
 check(Keys, P) ->
     T1 = now(),

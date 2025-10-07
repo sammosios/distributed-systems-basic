@@ -13,4 +13,5 @@ remote_add_nodes(N, RHost) ->
   test:start(?Module, N, {base, RHost}).
 
 data_random(N) ->
-  test:random_add(N, base).
+  Keys = test:random_add(N, base),
+  Keys.
