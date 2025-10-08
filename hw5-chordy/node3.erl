@@ -2,7 +2,7 @@
 -export([start/1, start/2]).
 
 -define(Timeout, 3000).
--define(Stabilize, 2000).
+-define(Stabilize, 1000).
 
 start(Id) ->
     start(Id, nil).
@@ -75,13 +75,15 @@ node(Id, Predecessor, Successor, Next, Store) ->
             pretty_print(Id, Predecessor, Successor, Next, Store),
             node(Id, Predecessor, Successor, Next, Store);
         probe ->
-            create_probe(Id, Successor),
+            StoreSize = maps:size(Store),
+            create_probe(Id, StoreSize, Successor),
             node(Id, Predecessor, Successor, Next, Store);
         {probe, Id, Nodes, T} ->
             remove_probe(T, Nodes),
             node(Id, Predecessor, Successor, Next, Store);
         {probe, Ref, Nodes, T} ->
-            forward_probe(Id, Ref, Nodes, T, Successor),
+            StoreSize = maps:size(Store),
+            forward_probe(Id, StoreSize, Ref, Nodes, T, Successor),
             node(Id, Predecessor, Successor, Next, Store);
         stabilize ->
             stabilize(Successor),
@@ -163,12 +165,6 @@ stabilize(Pred, Next, Id, Successor) ->
             end
     end.
 
-
-% down(Ref, {_, Ref, _}, Successor, Next) ->
-%     {nil, Successor, Next};
-% down(Ref, Predecessor, {_, Ref, _}, {Nkey, Npid}) ->
-%     Nref = monitor(Npid),
-%     {Predecessor, {Nkey, Nref, Npid}, nil}.
 
 down(Ref, Predecessor, Successor, Next) ->
     % If predecessor died
@@ -255,22 +251,34 @@ drop(nil) ->
 drop(Ref) ->
     erlang:demonitor(Ref, [flush]).
 
-create_probe(Id, Successor) ->
+create_probe(Id, StoreSize, Successor) ->
   {_, _, Spid} = Successor,
   Time = erlang:system_time(),
-  Spid ! {probe, Id, [{Id, self()}], Time}.
+  Spid ! {probe, Id, [{Id, StoreSize, self()}], Time}.
 
-forward_probe(Id, Ref, Nodes, T, Successor) ->
+forward_probe(Id, StoreSize, Ref, Nodes, T, Successor) ->
   {_, _, Spid} = Successor,
-  Nodes1 = [{Id, self()} | Nodes],
+  Nodes1 = [{Id, StoreSize, self()} | Nodes],
   Spid ! {probe, Ref, Nodes1, T}.
 
 remove_probe(T, Nodes) ->
-  Time = erlang:system_time(),
-  ProbeDuration = Time - T,
-  io:format("Probe finished in ~ps~n", [ProbeDuration / 1000000]),
-  io:format("Passed through ~p~n", [Nodes]),
-  ok.
+    Time = erlang:system_time(),
+    ProbeDuration = Time - T,
+    % Calculate total store size
+    TotalItems = lists:sum([StoreSize || {_, StoreSize, _} <- Nodes]),
+    io:format("Probe finished in ~.3fs~n", [ProbeDuration / 1000000]),
+    io:format("Nodes visited (~p total):~n", [length(Nodes)]),
+    io:format("~s~n", [string:copies("-", 60)]),
+    lists:foreach(
+      fun({Id, StoreSize, Pid}) ->
+          io:format("ID: ~-15w | Store size: ~-6w | PID: ~p~n",
+                    [Id, StoreSize, Pid])
+      end,
+      Nodes),
+    io:format("~s~n", [string:copies("-", 60)]),
+    io:format("Total items stored across all nodes: ~p~n", [TotalItems]),
+    ok.
+
 
 pretty_print(Id, Predecessor, Successor, Next, Store) ->
     io:format("~n===== Node ~p =====~n", [Id]),
@@ -278,13 +286,14 @@ pretty_print(Id, Predecessor, Successor, Next, Store) ->
     print_tuple("Successor", Successor),
     print_tuple("Next", Next),
 
-    io:format("Store:~n"),
-    maps:foreach(
-      fun(K, V) ->
-          io:format("  ~p => ~p~n", [K, V])
-      end,
-      Store
-    ),
+    io:format("Store Size: ~p~n" , [maps:size(Store)]),
+    % io:format("Store:~n"),
+    % maps:foreach(
+    %   fun(K, V) ->
+    %       io:format("  ~p => ~p~n", [K, V])
+    %   end,
+    %   Store
+    % ),
     io:format("====================~n").
 
 print_tuple(Label, {Key, Ref, Pid}) when is_pid(Pid) ->
